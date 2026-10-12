@@ -1,0 +1,23 @@
+# Build output
+build/
+
+# Compiled binaries
+*.o
+*.out
+a.out
+minijava
+
+# Flex/Bison generated files (in case generated outside build/)
+lex.yy.c
+*.tab.c
+*.tab.h
+*.output
+
+# Editor/OS cruft
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs you might generate while testing
+*.log
