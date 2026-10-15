@@ -5,6 +5,9 @@
 int yylex(void);
 void yyerror(const char *s);
 extern int yylineno;
+extern int yydebug;
+
+extern char *yytext;
 %}
 
 %union {
@@ -53,8 +56,8 @@ extern int yylineno;
 %token LENGTH
 %token <ival> INTEGER_LITERAL
 %start Goal
+%type <sval> Identifier
  
-
 
 %%
 
@@ -66,12 +69,12 @@ StatementList
     ;
 
 Statement
-    : LCURLY StatementList RCURLY
-    | IF LPAR Expression RPAR Statement ELSE Statement
-    | WHILE LPAR Expression RPAR Statement
-    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI
-    | Identifier EQUAL Expression SEMI
-    | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI
+    : LCURLY StatementList RCURLY                                  { printf("Parse Statement successful\n"); }
+    | IF LPAR Expression RPAR Statement ELSE Statement            { printf("Parse Statement successful\n"); }
+    | WHILE LPAR Expression RPAR Statement                        { printf("Parse Statement successful\n"); }
+    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI        { printf("Parse Statement successful\n"); }
+    | Identifier EQUAL Expression SEMI                            { printf("Parse Statement successful\n"); }
+    | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI { printf("Parse Statement successful\n"); }
     ;
 
 ExpressionList
@@ -105,7 +108,25 @@ OptionalTypeIdent
     ;
 
 MethodDeclaration
-    : PUBLIC Type Identifier LPAR OptionalTypeIdent RPAR LCURLY VarDeclarationList StatementList RETURN Expression SEMI RCURLY
+    : PUBLIC Type Identifier LPAR OptionalTypeIdent RPAR LCURLY MethodBody  RCURLY
+    {  printf("Parsed MethodDeclaration '%s'\n", $3); }
+    ;
+
+MethodBody
+    : RETURN Expression SEMI
+    | StatementList1 RETURN Expression SEMI
+    | VarDeclList1 RETURN Expression SEMI
+    | VarDeclList1 StatementList1 RETURN Expression SEMI
+    ;
+
+VarDeclList1
+    : VarDeclaration
+    | VarDeclList1 VarDeclaration
+    ;
+
+StatementList1
+    : Statement
+    | StatementList1 Statement
     ;
 
 ClassDeclarationList
@@ -123,33 +144,35 @@ MethodDeclarationList
     ;
 
 
-
 ClassDeclaration
     : CLASS Identifier ExtendOptional LCURLY VarDeclarationList MethodDeclarationList RCURLY
+    { printf("Parse ClassDeclaration successful\n"); }
     ;
 
 Expression
-    : Expression AND Expression
-    | Expression LESS Expression
-    | Expression ADD Expression
-    | Expression SUBT Expression
-    | Expression MULTI Expression
-    | Expression LBRACKET Expression RBRACKET
-    | Expression DOT LENGTH
-    | Expression DOT Identifier LPAR OptionalExpression RPAR
-    | INTEGER_LITERAL
-    | TRUE
-    | FALSE
-    | Identifier
-    | THIS
-    | NEW INT LBRACKET Expression RBRACKET
-    | NEW Identifier LPAR RPAR
-    | EXCLAM Expression
-    | LPAR Expression RPAR
+    : Expression AND Expression                   { printf("Parse Expression successful\n"); }
+    | Expression LESS Expression                  { printf("Parse Expression successful\n"); }
+    | Expression ADD Expression                   { printf("Parse Expression successful\n"); }
+    | Expression SUBT Expression                  { printf("Parse Expression successful\n"); }
+    | Expression MULTI Expression                 { printf("Parse Expression successful\n"); }
+    | Expression LBRACKET Expression RBRACKET     { printf("Parse Expression successful\n"); }
+    | Expression DOT LENGTH                       { printf("Parse Expression successful\n"); }
+    | Expression DOT Identifier LPAR OptionalExpression RPAR { printf("Parse Expression successful\n"); }
+    | INTEGER_LITERAL                             { printf("Parse Expression successful\n"); }
+    | TRUE                                        { printf("Parse Expression successful\n"); }
+    | FALSE                                       { printf("Parse Expression successful\n"); }
+    | Identifier                                  { printf("Parse Expression successful\n"); }
+    | THIS                                        { printf("Parse Expression successful\n"); }
+    | NEW INT LBRACKET Expression RBRACKET        { printf("Parse Expression successful\n"); }
+    | NEW Identifier LPAR RPAR                    { printf("Parse Expression successful\n"); }
+    | EXCLAM Expression                           { printf("Parse Expression successful\n"); }
+    | LPAR Expression RPAR                        { printf("Parse Expression successful\n"); }
     ;
 
 VarDeclaration
-    : Type Identifier SEMI;
+    : Type Identifier SEMI
+    { printf("Parse VarDeclaration successful\n"); }
+    ;
 
 Type
     : INT LBRACKET RBRACKET
@@ -170,16 +193,20 @@ MainClass
 
 %%
 
-void yyerror(const char *s){
-    fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
+void yyerror(const char *s) {
+    fprintf(stderr,
+            "Syntax error at line %d near '%s': %s\n",
+            yylineno, yytext, s);
 }
 
-int main(void){
-    if(yyparse() == 0){
-        printf("Parse successful \n");
+int main(void) {
+    /* yydebug = 1; */
+
+    if (yyparse() == 0) {
+        printf("Parse successful\n");
         return 0;
-    }else{
-        printf("Parse failed \n");
-        return 1;
     }
+
+    printf("Parse failed\n");
+    return 1;
 }

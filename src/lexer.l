@@ -4,7 +4,7 @@
 #include "parser.tab.h"
 %}
 
-%option noyywrap
+%option noyywrap yylineno
 
 %%
 "return" { return RETURN; }
@@ -47,9 +47,10 @@
 
 [0-9]+ { yylval.ival = atoi(yytext); return INTEGER_LITERAL; }
 
-[a-zA-Z][a-zA-Z0-9]*   { yylval.sval = strdup(yytext); return IDENT; }
-\n { yylineno++; }
+[a-zA-Z_][a-zA-Z0-9_]*   { yylval.sval = strdup(yytext); return IDENT; }
+\n { /* skip newline */ }
 [ \t\r] { /* skip */}
+"//"[^\n]*  { /* skip comments */}
 
 
 %%
