@@ -7,3 +7,5 @@
 * **Resolution Strategy:** 
   * We rely on Bison's default shift resolution behavior, which correctly shifts the lookahead token and parses valid MiniJava programs as intended.
   * *Alternative fixes considered:* Refactoring the grammar into a combined `BlockItem` production to delay resolution to lookahead token #2, or introducing a `%glr-parser` directive. We retained the original BNF grammar structure to align strictly with the standard MiniJava specification.
+
+It was fixed using BodyItem to clear the grammar.
