@@ -36,6 +36,19 @@
 "+" { return ADD; }
 "-" { return SUBT; }
 "*" { return MULTI; }
+
+"==" { return EQ; }
+"!=" { return NEQ; }
+"<=" { return LE; }
+">=" { return GE; }
+">" { return GT; }
+"||" { return OR; }
+"/" { return DIV; }
+"%" { return MOD; }
+"null" { return NULL_LIT; }
+
+
+
 "length" { return LENGTH; }
 "true" { return TRUE; }
 "false" { return FALSE; }

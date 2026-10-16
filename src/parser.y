@@ -45,11 +45,14 @@ extern char *yytext;
 %token COMMA
 %token EXTENDS
 %token RETURN
+%token NULL_LIT
 
+%left OR
 %left AND
-%left LESS
+%left EQ NEQ    
+%left LESS LE GT GE
 %left ADD SUBT
-%left  MULTI
+%left  MULTI DIV MOD
 %right EXCLAM
 %left LBRACKET DOT
 
@@ -154,6 +157,14 @@ Expression
     | Expression LESS Expression                  { printf("Parse Expression successful\n"); }
     | Expression ADD Expression                   { printf("Parse Expression successful\n"); }
     | Expression SUBT Expression                  { printf("Parse Expression successful\n"); }
+    | Expression OR Expression                    { printf("Parse Expression successful\n"); }
+    | Expression EQ Expression                    { printf("Parse Expression successful\n"); }
+    | Expression NEQ Expression                   { printf("Parse Expression successful\n"); }
+    | Expression LE Expression                    { printf("Parse Expression successful\n"); }
+    | Expression GE Expression                    { printf("Parse Expression successful\n"); }
+    | Expression GT Expression                    { printf("Parse Expression successful\n"); }
+    | Expression DIV Expression                   { printf("Parse Expression successful\n"); }
+    | Expression MOD Expression                   { printf("Parse Expression successful\n"); }
     | Expression MULTI Expression                 { printf("Parse Expression successful\n"); }
     | Expression LBRACKET Expression RBRACKET     { printf("Parse Expression successful\n"); }
     | Expression DOT LENGTH                       { printf("Parse Expression successful\n"); }
@@ -161,6 +172,7 @@ Expression
     | INTEGER_LITERAL                             { printf("Parse Expression successful\n"); }
     | TRUE                                        { printf("Parse Expression successful\n"); }
     | FALSE                                       { printf("Parse Expression successful\n"); }
+    | NULL_LIT                                    { printf("Parse Expression successful\n"); }
     | Identifier                                  { printf("Parse Expression successful\n"); }
     | THIS                                        { printf("Parse Expression successful\n"); }
     | NEW INT LBRACKET Expression RBRACKET        { printf("Parse Expression successful\n"); }
