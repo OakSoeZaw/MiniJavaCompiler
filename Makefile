@@ -32,4 +32,4 @@ test: $(TARGET)
 		done; \
 	done | tee logs/summary.txt
 
-.PHONY: all clean
+.PHONY: all clean test
