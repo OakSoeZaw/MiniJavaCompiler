@@ -8,6 +8,8 @@ extern int yylineno;
 extern int yydebug;
 
 extern char *yytext;
+
+
 %}
 
 %union {
@@ -61,6 +63,7 @@ extern char *yytext;
 %start Goal
 %type <sval> Identifier
  
+ %define parse.error verbose
 
 %%
 
@@ -78,6 +81,7 @@ Statement
     | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI        { printf("Parse Statement successful\n"); }
     | Identifier EQUAL Expression SEMI                            { printf("Parse Statement successful\n"); }
     | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI { printf("Parse Statement successful\n"); }
+    | error SEMI { yyerrok; }
     ;
 
 ExpressionList
@@ -113,6 +117,7 @@ OptionalTypeIdent
 MethodDeclaration
     : PUBLIC Type Identifier LPAR OptionalTypeIdent RPAR LCURLY MethodBody  RCURLY
     {  printf("Parsed MethodDeclaration '%s'\n", $3); }
+    | PUBLIC error RCURLY { yyerrok; }
     ;
 
 MethodBody
@@ -149,7 +154,8 @@ MethodDeclarationList
 
 ClassDeclaration
     : CLASS Identifier ExtendOptional LCURLY VarDeclarationList MethodDeclarationList RCURLY
-    { printf("Parse ClassDeclaration successful\n"); }
+    { printf("Parsed class '%s'\n", $2); }
+    | CLASS error RCURLY { yyerrok; }
     ;
 
 Expression
@@ -201,24 +207,33 @@ MainClass
     : CLASS Identifier LCURLY PUBLIC STATIC VOID MAIN LPAR STRING_TYPE 
     LBRACKET RBRACKET Identifier RPAR LCURLY Statement RCURLY RCURLY 
     { printf("Parse MainClass successful\n"); }
+    | CLASS Identifier LCURLY PUBLIC STATIC VOID MAIN LPAR STRING_TYPE
+      LBRACKET RBRACKET Identifier RPAR LCURLY error RCURLY RCURLY
+      { yyerrok; }
     ;
 
 %%
 
+int error_count = 0;
+
 void yyerror(const char *s) {
-    fprintf(stderr,
-            "Syntax error at line %d near '%s': %s\n",
-            yylineno, yytext, s);
+    error_count++;
+    fprintf(stderr, "Syntax error at line %d: %s\n", yylineno, s);
 }
 
 int main(void) {
     /* yydebug = 1; */
-
-    if (yyparse() == 0) {
-        printf("Parse successful\n");
+    int rc = yyparse();
+    if(rc == 0 && error_count == 0){
+        printf("Parse successful \n");
         return 0;
+    } else if ( rc == 0){
+        printf("Parse completed with %d syntax error (recovered)\n", error_count);
+        return 1;
+    }else{
+        printf("Parse failed (unrecoverable)\n");
+        return 1;
     }
 
-    printf("Parse failed\n");
-    return 1;
+    
 }

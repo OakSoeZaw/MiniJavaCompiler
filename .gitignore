@@ -21,3 +21,4 @@ lex.yy.c
 
 # Logs you might generate while testing
 *.log
+logs/

@@ -64,6 +64,7 @@
 \n { /* skip newline */ }
 [ \t\r] { /* skip */}
 "//"[^\n]*  { /* skip comments */}
+.   { fprintf(stderr, "Lexical error at line %d: unexpected character '%s'\n", yylineno, yytext); }
 
 
 %%

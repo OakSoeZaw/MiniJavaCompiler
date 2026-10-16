@@ -22,4 +22,14 @@ $(BUILD):
 clean:
 	rm -rf $(BUILD)
 
+test: $(TARGET)
+	mkdir -p logs
+	@for d in base extensions errors; do \
+		for f in tests/$$d/*.java; do \
+			name=$$(basename "$$f" .java); \
+			./$(TARGET) < "$$f" > "logs/$$d-$$name.out" 2> "logs/$$d-$$name.err"; \
+			echo "$$d/$$name: $$(tail -1 "logs/$$d-$$name.out")"; \
+		done; \
+	done | tee logs/summary.txt
+
 .PHONY: all clean
