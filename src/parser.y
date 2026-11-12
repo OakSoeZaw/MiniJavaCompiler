@@ -75,13 +75,13 @@ StatementList
     ;
 
 Statement
-    : LCURLY StatementList RCURLY                                  { printf("Parse Statement successful\n"); }
-    | IF LPAR Expression RPAR Statement ELSE Statement            { printf("Parse Statement successful\n"); }
-    | WHILE LPAR Expression RPAR Statement                        { printf("Parse Statement successful\n"); }
-    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI        { printf("Parse Statement successful\n"); }
-    | Identifier EQUAL Expression SEMI                            { printf("Parse Statement successful\n"); }
+    : LCURLY StatementList RCURLY                                   { printf("Parse Statement successful\n"); }
+    | IF LPAR Expression RPAR Statement ELSE Statement              { printf("Parse Statement successful\n"); }
+    | WHILE LPAR Expression RPAR Statement                          { printf("Parse Statement successful\n"); }
+    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI          { printf("Parse Statement successful\n"); }
+    | Identifier EQUAL Expression SEMI                              { printf("Parse Statement successful\n"); }
     | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI { printf("Parse Statement successful\n"); }
-    | error SEMI { yyerrok; }
+    | error SEMI                                                    { yyerrok; }
     ;
 
 ExpressionList
