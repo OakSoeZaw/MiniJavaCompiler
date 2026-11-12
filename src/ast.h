@@ -47,7 +47,7 @@ typedef struct EXP{
         bool boolconstE;
         struct { BinOp op; struct EXP *left; struct EXP *right; } binOpE;
         struct { UnOp op; struct EXP *expr;} unOpE;
-        struct { char *typeName; EXP *size;} arrayNewE;
+        struct { EXP *size;} arrayNewE;
         struct { EXP *array; EXP *index; } arrayIndexE;
         struct { EXP *array;} arrayLengthE;
         struct { EXP *receiver; char *methodName; EXP_LIST *args; } methodCallE;
@@ -62,7 +62,7 @@ EXP *makeEXPnull(int line);
 EXP *makeEXPthis(int line);
 EXP *makeEXPbinop(int line,BinOp op, EXP *left, EXP *right);
 EXP *makeEXPunop(int line, UnOp op, EXP *expr);
-EXP *makeEXParrayNew(int line, char *typeName, EXP *size);
+EXP *makeEXParrayNew(int line, EXP *size);
 EXP *makeEXParrayIndex(int line, EXP *array, EXP *index);
 EXP *makeEXParrayLength(int line, EXP *array);
 EXP *makeEXPmethodCall(int line, EXP *receiver, char *methodName, EXP_LIST *args);

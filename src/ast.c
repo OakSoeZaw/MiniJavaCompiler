@@ -63,10 +63,10 @@ EXP *makeEXPunop(int line, UnOp op, EXP *expr){
     return e;
 }
 
-EXP *makeEXParrayNew(int line, char *typeName, EXP *size){
+EXP *makeEXParrayNew(int line, EXP *size){
     EXP *e = NEW(EXP);
+    e->line = line;
     e->kind = arrayNewK;
-    e->val.arrayNewE.typeName = typeName;
     e->val.arrayNewE.size = size;
     return e; 
 }

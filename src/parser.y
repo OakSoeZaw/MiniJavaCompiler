@@ -12,9 +12,17 @@ extern char *yytext;
 
 %}
 
+%code requires {
+    #include "ast.h"
+}
+
+%locations
+
 %union {
     int ival;
     char *sval;
+    EXP *exp;
+    EXP_LIST *elist;
 }
 
 
@@ -61,9 +69,12 @@ extern char *yytext;
 %token LENGTH
 %token <ival> INTEGER_LITERAL
 %start Goal
+
 %type <sval> Identifier
+%type <exp> Expression
+%type <elist> ExpressionList OptionalExpression
  
- %define parse.error verbose
+%define parse.error verbose
 
 %%
 
@@ -85,13 +96,13 @@ Statement
     ;
 
 ExpressionList
-    : Expression
-    | ExpressionList COMMA Expression
+    : Expression                        { $$ = makeEXPList($1, NULL); }
+    | Expression COMMA ExpressionList   { $$ = makeEXPList($1, $3); }
     ;
 
 OptionalExpression
-    : %empty
-    | ExpressionList
+    : %empty                { $$ = NULL; }
+    | ExpressionList        { $$ = $1; }
     ;
 
 ExtendOptional
@@ -159,32 +170,32 @@ ClassDeclaration
     ;
 
 Expression
-    : Expression AND Expression                   { printf("Parse Expression successful\n"); }
-    | Expression LESS Expression                  { printf("Parse Expression successful\n"); }
-    | Expression ADD Expression                   { printf("Parse Expression successful\n"); }
-    | Expression SUBT Expression                  { printf("Parse Expression successful\n"); }
-    | Expression OR Expression                    { printf("Parse Expression successful\n"); }
-    | Expression EQ Expression                    { printf("Parse Expression successful\n"); }
-    | Expression NEQ Expression                   { printf("Parse Expression successful\n"); }
-    | Expression LE Expression                    { printf("Parse Expression successful\n"); }
-    | Expression GE Expression                    { printf("Parse Expression successful\n"); }
-    | Expression GT Expression                    { printf("Parse Expression successful\n"); }
-    | Expression DIV Expression                   { printf("Parse Expression successful\n"); }
-    | Expression MOD Expression                   { printf("Parse Expression successful\n"); }
-    | Expression MULTI Expression                 { printf("Parse Expression successful\n"); }
-    | Expression LBRACKET Expression RBRACKET     { printf("Parse Expression successful\n"); }
-    | Expression DOT LENGTH                       { printf("Parse Expression successful\n"); }
-    | Expression DOT Identifier LPAR OptionalExpression RPAR { printf("Parse Expression successful\n"); }
-    | INTEGER_LITERAL                             { printf("Parse Expression successful\n"); }
-    | TRUE                                        { printf("Parse Expression successful\n"); }
-    | FALSE                                       { printf("Parse Expression successful\n"); }
-    | NULL_LIT                                    { printf("Parse Expression successful\n"); }
-    | Identifier                                  { printf("Parse Expression successful\n"); }
-    | THIS                                        { printf("Parse Expression successful\n"); }
-    | NEW INT LBRACKET Expression RBRACKET        { printf("Parse Expression successful\n"); }
-    | NEW Identifier LPAR RPAR                    { printf("Parse Expression successful\n"); }
-    | EXCLAM Expression                           { printf("Parse Expression successful\n"); }
-    | LPAR Expression RPAR                        { printf("Parse Expression successful\n"); }
+    : Expression AND Expression                   { $$ = makeEXPbinop(@2.first_line, andOp, $1, $3); }
+    | Expression LESS Expression                  { $$ = makeEXPbinop(@2.first_line, lessOp, $1, $3); }
+    | Expression ADD Expression                   { $$ =  makeEXPbinop(@2.first_line, plusOp, $1, $3);}
+    | Expression SUBT Expression                  { $$ = makeEXPbinop(@2.first_line, minusOp, $1, $3); }
+    | Expression OR Expression                    { $$ = makeEXPbinop(@2.first_line, orOp, $1, $3); }
+    | Expression EQ Expression                    { $$ = makeEXPbinop(@2.first_line, eqOp, $1, $3); }
+    | Expression NEQ Expression                   { $$ = makeEXPbinop(@2.first_line, neqOp, $1, $3); }
+    | Expression LE Expression                    { $$ = makeEXPbinop(@2.first_line, leOp, $1, $3); }
+    | Expression GE Expression                    { $$ = makeEXPbinop(@2.first_line, geOp, $1, $3);}
+    | Expression GT Expression                    { $$ = makeEXPbinop(@2.first_line, gtOp, $1, $3); }
+    | Expression DIV Expression                   { $$ = makeEXPbinop(@2.first_line, divOp, $1, $3); }
+    | Expression MOD Expression                   { $$ = makeEXPbinop(@2.first_line, modOp, $1, $3); }
+    | Expression MULTI Expression                 { $$ = makeEXPbinop(@2.first_line, timesOp, $1, $3); }
+    | Expression LBRACKET Expression RBRACKET     { $$ = makeEXParrayIndex(@2.first_line, $1, $3); }
+    | Expression DOT LENGTH                       { $$ = makeEXParrayLength(@2.first_line, $1); }
+    | Expression DOT Identifier LPAR OptionalExpression RPAR { $$ = makeEXPmethodCall(@2.first_line, $1, $3, $5); }
+    | INTEGER_LITERAL                             { $$ = makeEXPintconst(@1.first_line, $1); }
+    | TRUE                                        { $$ = makeEXPboolconst(@1.first_line, true); }
+    | FALSE                                       { $$ = makeEXPboolconst(@1.first_line, false);  }
+    | NULL_LIT                                    { $$ = makeEXPnull(@1.first_line); }
+    | Identifier                                  { $$ = makeEXPid(@1.first_line, $1); }
+    | THIS                                        { $$ = makeEXPthis(@1.first_line);}
+    | NEW INT LBRACKET Expression RBRACKET        { $$ = makeEXParrayNew(@1.first_line, $4); }
+    | NEW Identifier LPAR RPAR                    { $$ = makeEXPobjectNew(@1.first_line, $2); }
+    | EXCLAM Expression                           { $$ = makeEXPunop(@1.first_line, notOp, $2); }
+    | LPAR Expression RPAR                        { $$ = $2; }
     ;
 
 VarDeclaration
@@ -200,7 +211,7 @@ Type
     ;
 
 Identifier
-    : IDENT
+    : IDENT { $$ = $1; }
     ;
 
 MainClass
