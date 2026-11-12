@@ -1,20 +1,30 @@
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -I$(SRC) -I$(BUILD)
 SRC = src
 BUILD = build
 
 TARGET = $(BUILD)/minijava
+OBJS = $(BUILD)/parser.tab.o $(BUILD)/lex.yy.o $(BUILD)/ast.o
 
 all: $(TARGET)
 
-$(TARGET): $(BUILD)/parser.tab.c $(BUILD)/lex.yy.c
-	$(CC) $(CFLAGS) $(BUILD)/parser.tab.c $(BUILD)/lex.yy.c -o $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 
 $(BUILD)/parser.tab.c $(BUILD)/parser.tab.h: $(SRC)/parser.y | $(BUILD)
 	bison -t -d -v -o $(BUILD)/parser.tab.c $(SRC)/parser.y
 	
 $(BUILD)/lex.yy.c: $(BUILD)/parser.tab.h $(SRC)/lexer.l | $(BUILD)
 	flex -o $(BUILD)/lex.yy.c $(SRC)/lexer.l	
+
+$(BUILD)/parser.tab.o: $(BUILD)/parser.tab.c $(SRC)/ast.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/lex.yy.o: $(BUILD)/lex.yy.c $(BUILD)/parser.tab.h $(SRC)/ast.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/ast.o: $(SRC)/ast.c $(SRC)/ast.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
 	
 $(BUILD):
 	mkdir -p $(BUILD)

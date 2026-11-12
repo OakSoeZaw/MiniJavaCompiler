@@ -13,7 +13,6 @@ struct EXP_LIST{
 
 typedef enum{
     notOp,
-    uminusOP
 }UnOp;
 
 typedef enum{
@@ -40,6 +39,7 @@ typedef enum {
 } ExpKind;
 
 typedef struct EXP{
+    int line;
     ExpKind kind;
     union{
         char *idE;
@@ -55,18 +55,18 @@ typedef struct EXP{
     } val;
 } EXP;
 
-EXP *makeEXPid(char *id);
-EXP *makeEXPintconst(int intconst);
-EXP *makeEXPboolconst(bool boolconst);
-EXP *makeEXPnull(void);
-EXP *makeEXPthis(void);
-EXP *makeEXPbinop(BinOp op, EXP *left, EXP *right);
-EXP *makeEXPunop(UnOp op, EXP *expr);
-EXP *makeEXParrayNew(char *typeName, EXP *size);
-EXP *makeEXParrayIndex(EXP *array, EXP *index);
-EXP *makeEXParrayLength(EXP *array);
-EXP *makeEXPmethodCall(EXP *receiver, char *methodName, EXP_LIST *args);
-EXP *makeEXPobjectNew(char *className);
+EXP *makeEXPid(int line, char *id);
+EXP *makeEXPintconst(int line, int intconst);
+EXP *makeEXPboolconst(int line, bool boolconst);
+EXP *makeEXPnull(int line);
+EXP *makeEXPthis(int line);
+EXP *makeEXPbinop(int line,BinOp op, EXP *left, EXP *right);
+EXP *makeEXPunop(int line, UnOp op, EXP *expr);
+EXP *makeEXParrayNew(int line, char *typeName, EXP *size);
+EXP *makeEXParrayIndex(int line, EXP *array, EXP *index);
+EXP *makeEXParrayLength(int line, EXP *array);
+EXP *makeEXPmethodCall(int line, EXP *receiver, char *methodName, EXP_LIST *args);
+EXP *makeEXPobjectNew(int line, char *className);
 
 EXP_LIST *makeEXPList(EXP *head, EXP_LIST *next);
 
