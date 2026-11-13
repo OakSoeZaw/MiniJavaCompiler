@@ -23,6 +23,8 @@ extern char *yytext;
     char *sval;
     EXP *exp;
     EXP_LIST *elist;
+    STMT *stmt;
+    STMT_LIST *slist;
 }
 
 
@@ -73,6 +75,8 @@ extern char *yytext;
 %type <sval> Identifier
 %type <exp> Expression
 %type <elist> ExpressionList OptionalExpression
+%type <stmt> Statement
+%type <slist> StatementList StatementList1
  
 %define parse.error verbose
 
@@ -81,18 +85,18 @@ extern char *yytext;
 
 
 StatementList 
-    : %empty
-    | StatementList Statement
+    : %empty                    { $$ = NULL; }
+    | StatementList1                   { $$ = $1; }
     ;
 
 Statement
-    : LCURLY StatementList RCURLY                                   { printf("Parse Statement successful\n"); }
-    | IF LPAR Expression RPAR Statement ELSE Statement              { printf("Parse Statement successful\n"); }
-    | WHILE LPAR Expression RPAR Statement                          { printf("Parse Statement successful\n"); }
-    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI          { printf("Parse Statement successful\n"); }
-    | Identifier EQUAL Expression SEMI                              { printf("Parse Statement successful\n"); }
-    | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI { printf("Parse Statement successful\n"); }
-    | error SEMI                                                    { yyerrok; }
+    : LCURLY StatementList RCURLY                                   { $$ = makeSTMTblock(@1.first_line, $2); }
+    | IF LPAR Expression RPAR Statement ELSE Statement              { $$ = makeSTMTif(@1.first_line, $3, $5, $7);}
+    | WHILE LPAR Expression RPAR Statement                          { $$ = makeSTMTwhile(@1.first_line, $3, $5); }
+    | SYSTEM DOT OUT DOT PRINTLN LPAR Expression RPAR SEMI          { $$ = makeSTMTprint(@1.first_line, $7);}
+    | Identifier EQUAL Expression SEMI                              { $$ = makeSTMTassign(@1.first_line, $1, $3);}
+    | Identifier LBRACKET Expression RBRACKET EQUAL Expression SEMI { $$ = makeSTMTarrayAssign(@1.first_line, $1, $3, $6);}
+    | error SEMI                                                    { $$ = NULL; yyerrok; }
     ;
 
 ExpressionList
@@ -144,8 +148,8 @@ VarDeclList1
     ;
 
 StatementList1
-    : Statement
-    | StatementList1 Statement
+    : Statement                             { $$ = $1 ? makeSTMTList($1, NULL): NULL; }
+    | Statement StatementList1              { $$ = $1 ? makeSTMTList($1, $2) : $2; }
     ;
 
 ClassDeclarationList

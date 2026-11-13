@@ -71,4 +71,37 @@ EXP *makeEXPobjectNew(int line, char *className);
 EXP_LIST *makeEXPList(EXP *head, EXP_LIST *next);
 
 
+typedef struct STMT STMT;
+typedef struct STMT_LIST STMT_LIST;
+
+struct STMT_LIST { 
+    STMT *head; 
+    STMT_LIST *next; 
+};
+
+typedef enum { 
+    blockK, ifK, whileK, printK, assignK, arrayAssignK
+}StmtKind;
+
+typedef struct STMT{
+    int line;
+    StmtKind kind;
+    union{
+        STMT_LIST *blockS;
+        struct{ EXP *cond; STMT *thenBranch; STMT *elseBranch;} ifS;
+        struct{ EXP *cond; STMT *body;} whileS;
+        EXP *printS;
+        struct { char *name; EXP *value;} assignS;
+        struct{ char *name; EXP *index; EXP *value;} arrayAssignS;
+    } val;
+} STMT;
+
+STMT *makeSTMTblock(int line, STMT_LIST *stmts);
+STMT *makeSTMTif(int line, EXP *cond, STMT * thenBranch, STMT *elseBranch);
+STMT *makeSTMTwhile(int line, EXP *cond, STMT *body);
+STMT *makeSTMTprint(int line, EXP *e);
+STMT *makeSTMTassign(int line, char *name, EXP *value);
+STMT *makeSTMTarrayAssign(int line, char *name, EXP *index, EXP *value);
+STMT_LIST *makeSTMTList(STMT *head, STMT_LIST *next);
+
 #endif
