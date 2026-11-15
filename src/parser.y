@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "ast.h"
 
 int yylex(void);
 void yyerror(const char *s);
@@ -9,7 +10,7 @@ extern int yydebug;
 
 extern char *yytext;
 
-
+PROGRAM *root = NULL;
 %}
 
 %code requires {
@@ -25,6 +26,13 @@ extern char *yytext;
     EXP_LIST *elist;
     STMT *stmt;
     STMT_LIST *slist;
+    TYPE *type;
+    VAR_DECL *vdecl;
+    BODY *body;
+    METHOD *method;
+    CLASS_DECL *cls;
+    MAIN_CLASS *mainc;
+    PROGRAM *prog;
 }
 
 
@@ -72,6 +80,16 @@ extern char *yytext;
 %token <ival> INTEGER_LITERAL
 %start Goal
 
+
+%type <type> Type
+%type <vdecl> VarDeclaration VarDeclarationList VarDeclList1
+%type <vdecl>  TypeIdentList OptionalTypeIdent
+%type <body> MethodBody
+%type <method> MethodDeclaration MethodDeclarationList
+%type <cls> ClassDeclaration ClassDeclarationList
+%type <sval> ExtendOptional
+%type<mainc> MainClass
+%type <prog> Goal
 %type <sval> Identifier
 %type <exp> Expression
 %type <elist> ExpressionList OptionalExpression
@@ -86,7 +104,7 @@ extern char *yytext;
 
 StatementList 
     : %empty                    { $$ = NULL; }
-    | StatementList1                   { $$ = $1; }
+    | StatementList1            { $$ = $1; }
     ;
 
 Statement
@@ -110,41 +128,41 @@ OptionalExpression
     ;
 
 ExtendOptional
-    : %empty
-    | EXTENDS Identifier
+    : %empty                        { $$ = NULL;}
+    | EXTENDS Identifier            { $$ = $2; }
     ;
 
 VarDeclarationList
-    : %empty
-    | VarDeclarationList VarDeclaration
+    : %empty                                    { $$ = NULL;}
+    | VarDeclaration VarDeclarationList         { $1->next = $2; $$ = $1;}
     ;
 
 TypeIdentList
-    : Type Identifier
-    | TypeIdentList COMMA Type Identifier
+    : Type Identifier                           { $$ = makeVARDECL(@1.first_line, $1, $2, NULL);}
+    | Type Identifier COMMA TypeIdentList       { $$ =makeVARDECL(@1.first_line, $1, $2, $4 ); }
     ;
 
 OptionalTypeIdent
-    : %empty
-    | TypeIdentList
+    : %empty                { $$ = NULL; }
+    | TypeIdentList         { $$ = $1; }
     ;
 
 MethodDeclaration
     : PUBLIC Type Identifier LPAR OptionalTypeIdent RPAR LCURLY MethodBody  RCURLY
-    {  printf("Parsed MethodDeclaration '%s'\n", $3); }
-    | PUBLIC error RCURLY { yyerrok; }
+    { $$ = makeMETHOD(@3.first_line, $2, $3, $5, $8, NULL);}
+    | PUBLIC error RCURLY { $$ = NULL; yyerrok; }
     ;
 
 MethodBody
-    : RETURN Expression SEMI
-    | StatementList1 RETURN Expression SEMI
-    | VarDeclList1 RETURN Expression SEMI
-    | VarDeclList1 StatementList1 RETURN Expression SEMI
+    : RETURN Expression SEMI                                { $$ = makeBODY(NULL, NULL, $2);}
+    | StatementList1 RETURN Expression SEMI                 { $$ = makeBODY(NULL, $1, $3); }
+    | VarDeclList1 RETURN Expression SEMI                   { $$ = makeBODY($1, NULL, $3);}
+    | VarDeclList1 StatementList1 RETURN Expression SEMI    { $$ = makeBODY($1, $2, $4); }
     ;
 
 VarDeclList1
-    : VarDeclaration
-    | VarDeclList1 VarDeclaration
+    : VarDeclaration                    { $$ = $1;}
+    | VarDeclaration VarDeclList1       { $1->next = $2; $$ = $1;}
     ;
 
 StatementList1
@@ -153,24 +171,24 @@ StatementList1
     ;
 
 ClassDeclarationList
-    : %empty
-    | ClassDeclarationList ClassDeclaration
+    : %empty                                    { $$ = NULL;}
+    | ClassDeclaration ClassDeclarationList     { if($1) { $1->next = $2; $$ = $1;} else $$ = $2;}
     ;
 
 Goal
-    : MainClass ClassDeclarationList
+    : MainClass ClassDeclarationList            { root = makePROGRAM($1, $2); $$ = root;}
     ;
 
 MethodDeclarationList
-    : %empty
-    | MethodDeclarationList MethodDeclaration
+    : %empty                                    { $$ = NULL;}
+    | MethodDeclaration MethodDeclarationList   { if($1) { $1->next = $2; $$ = $1;} else $$ = $2; }
     ;
 
 
 ClassDeclaration
     : CLASS Identifier ExtendOptional LCURLY VarDeclarationList MethodDeclarationList RCURLY
-    { printf("Parsed class '%s'\n", $2); }
-    | CLASS error RCURLY { yyerrok; }
+    { $$ = makeCLASS(@2.first_line, $2, $3, $5, $6, NULL);}
+    | CLASS error RCURLY { $$ = NULL; yyerrok; }
     ;
 
 Expression
@@ -203,15 +221,14 @@ Expression
     ;
 
 VarDeclaration
-    : Type Identifier SEMI
-    { printf("Parse VarDeclaration successful\n"); }
+    : Type Identifier SEMI             { $$ = makeVARDECL(@1.first_line, $1, $2, NULL);}
     ;
 
 Type
-    : INT LBRACKET RBRACKET
-    | BOOLEAN
-    | INT
-    | Identifier
+    : INT LBRACKET RBRACKET            { $$ = makeTYPE(@1.first_line, intArrayT, NULL);}
+    | BOOLEAN                          { $$ = makeTYPE(@1.first_line, boolT, NULL);}
+    | INT                              { $$ = makeTYPE(@1.first_line, intT, NULL);}
+    | Identifier                       { $$ = makeTYPE(@1.first_line, classT, $1);}
     ;
 
 Identifier
@@ -221,10 +238,10 @@ Identifier
 MainClass
     : CLASS Identifier LCURLY PUBLIC STATIC VOID MAIN LPAR STRING_TYPE 
     LBRACKET RBRACKET Identifier RPAR LCURLY Statement RCURLY RCURLY 
-    { printf("Parse MainClass successful\n"); }
+    { $$ = makeMAINCLASS(@2.first_line, $2, $12, $15 );}
     | CLASS Identifier LCURLY PUBLIC STATIC VOID MAIN LPAR STRING_TYPE
       LBRACKET RBRACKET Identifier RPAR LCURLY error RCURLY RCURLY
-      { yyerrok; }
+      { $$ = NULL; yyerrok; }
     ;
 
 %%

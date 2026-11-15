@@ -38,7 +38,7 @@ typedef enum {
     objectNewK, boolconstK
 } ExpKind;
 
-typedef struct EXP{
+struct EXP{
     int line;
     ExpKind kind;
     union{
@@ -53,7 +53,7 @@ typedef struct EXP{
         struct { EXP *receiver; char *methodName; EXP_LIST *args; } methodCallE;
         struct { char *className; } objectNewE; 
     } val;
-} EXP;
+};
 
 EXP *makeEXPid(int line, char *id);
 EXP *makeEXPintconst(int line, int intconst);
@@ -83,7 +83,7 @@ typedef enum {
     blockK, ifK, whileK, printK, assignK, arrayAssignK
 }StmtKind;
 
-typedef struct STMT{
+struct STMT{
     int line;
     StmtKind kind;
     union{
@@ -94,7 +94,7 @@ typedef struct STMT{
         struct { char *name; EXP *value;} assignS;
         struct{ char *name; EXP *index; EXP *value;} arrayAssignS;
     } val;
-} STMT;
+};
 
 STMT *makeSTMTblock(int line, STMT_LIST *stmts);
 STMT *makeSTMTif(int line, EXP *cond, STMT * thenBranch, STMT *elseBranch);
@@ -103,5 +103,66 @@ STMT *makeSTMTprint(int line, EXP *e);
 STMT *makeSTMTassign(int line, char *name, EXP *value);
 STMT *makeSTMTarrayAssign(int line, char *name, EXP *index, EXP *value);
 STMT_LIST *makeSTMTList(STMT *head, STMT_LIST *next);
+
+typedef enum {intT, boolT, intArrayT, classT,  nullT, errorT} TypeKind;
+
+typedef struct TYPE {
+    int line;
+    TypeKind kind;
+    char *className;
+}TYPE;  
+
+typedef struct VAR_DECL VAR_DECL;
+struct VAR_DECL { int line; TYPE *type; char *name; VAR_DECL *next; };
+
+typedef struct BODY{
+    VAR_DECL *locals;
+    STMT_LIST *stmts;
+    EXP *retExp;
+} BODY;
+
+typedef struct METHOD METHOD;
+struct METHOD {
+    int line;
+    TYPE *retType;
+    char *name;
+    VAR_DECL *params;
+    VAR_DECL *locals;
+    STMT_LIST *stmts;
+    EXP *retEXP;
+    METHOD *next;
+};
+
+typedef struct CLASS_DECL CLASS_DECL;
+struct CLASS_DECL {
+    int line;
+    char *name;
+    char *parent;
+    VAR_DECL *fields;
+    METHOD *methods;
+    CLASS_DECL *next;
+};
+
+typedef struct MAIN_CLASS{
+    int line;
+    char *name;
+    char *argName;
+    STMT *body;
+} MAIN_CLASS;
+
+typedef struct PROGRAM{
+    MAIN_CLASS *mainClass;
+    CLASS_DECL *classes;
+} PROGRAM;
+
+
+TYPE *makeTYPE(int line, TypeKind kind, char *className );
+VAR_DECL *makeVARDECL(int line, TYPE *type, char *name, VAR_DECL *next);
+BODY *makeBODY(VAR_DECL *locals, STMT_LIST * stmts, EXP *retExp);
+METHOD *makeMETHOD(int line, TYPE *retType, char *name, VAR_DECL *params,
+    BODY *body, METHOD *next);
+CLASS_DECL *makeCLASS(int line, char *name, char *parent, VAR_DECL *fields, METHOD *methods, CLASS_DECL *next);
+MAIN_CLASS *makeMAINCLASS(int line, char *name, char *argName, STMT *body);
+PROGRAM *makePROGRAM(MAIN_CLASS *m, CLASS_DECL *classes);
 
 #endif
