@@ -42,7 +42,8 @@ the final status line is 'Semantic check completed with N erros', or 'Parse succ
 - 'a[i]' needs 'int[]' and 'int'; 'a.length' nees 'int[]'; 'new int[e]' needs 'int e'
 
 ### println
-- 'Sytem.out.println' accepts only 'int'.
+- `System.out.println` accepts `int` or `boolean`.
+- It rejects `int[]`, class types and `null`.
 
 ### Statements
 - 'if' and 'while' conditions must be 'boolean'.

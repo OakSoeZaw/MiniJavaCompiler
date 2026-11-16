@@ -1,0 +1,27 @@
+=== tests/base/Bad.java
+Parse successful 
+
+=== tests/base/BinarySearch.java
+Parse successful 
+
+=== tests/base/BinaryTree.java
+Parse successful 
+
+=== tests/base/BubbleSort.java
+Parse successful 
+
+=== tests/base/Factorial.java
+Parse successful 
+
+=== tests/base/LinearSearch.java
+Parse successful 
+
+=== tests/base/LinkedList.java
+Parse successful 
+
+=== tests/base/QuickSort.java
+Parse successful 
+
+=== tests/base/TreeVisitor.java
+Parse successful 
+

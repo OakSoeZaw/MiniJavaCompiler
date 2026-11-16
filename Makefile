@@ -45,4 +45,7 @@ test: $(TARGET)
 		done; \
 	done | tee logs/summary.txt
 
-.PHONY: all clean test
+test-all: $(BUILD)/minijava
+	sh run_all_tests.sh
+
+.PHONY: all clean test test-all

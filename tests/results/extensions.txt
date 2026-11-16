@@ -1,0 +1,9 @@
+=== tests/extensions/null_refs.java
+Parse successful 
+
+=== tests/extensions/ops_arith.java
+Parse successful 
+
+=== tests/extensions/ops_relational.java
+Parse successful 
+

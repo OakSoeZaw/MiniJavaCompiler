@@ -329,9 +329,13 @@ static void checkStmt(STMT *s, Env *env){
             expect(typeOf(s->val.whileS.cond, env), boolT, &T_BOOL, s->line, "while condition");
             checkStmt(s->val.whileS.body, env);
             break;
-        case printK:
-            expect(typeOf(s->val.printS, env), intT, &T_INT, s->line, "println argument");
+        case printK:{
+            TYPE *pt = typeOf(s->val.printS, env);
+            if (pt->kind != errorT && pt->kind != intT && pt->kind != boolT){
+                semError(s->line, "println argument must be int or boolean, found %s", typeName(pt));
+            }
             break;
+        }  
         case assignK:{
             TYPE *vt = lookupVar(env, s->val.assignS.name);
             TYPE *et = typeOf(s->val.assignS.value, env);

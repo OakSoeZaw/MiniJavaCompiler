@@ -130,6 +130,15 @@ class Main {
 }
 EOF
 
+## test for println
+cat > 17_println_bad_type.java <<'EOF'
+class Main {
+    public static void main(String[] args) {
+        System.out.println(new int[3]);
+    }
+}
+EOF
+
 # 16 valid control program
 cat > 16_valid.java <<'EOF'
 class Main {

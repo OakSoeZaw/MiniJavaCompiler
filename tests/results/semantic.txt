@@ -3,7 +3,7 @@ Semantic error at line 3: duplicate class 'A'
 Semantic check completed with 1 errors
 
 === tests/semantic/02_undefined_parent.java
-Semantic error at line 2: undefined parent class 'Z
+Semantic error at line 2: undefined parent class 'Z'
 Semantic check completed with 1 errors
 
 === tests/semantic/03_extends_self.java
@@ -60,4 +60,8 @@ Semantic check completed with 1 errors
 
 === tests/semantic/16_valid.java
 Parse successful 
+
+=== tests/semantic/17_println_bad_type.java
+Semantic error at line 3: println argument must be int or boolean, found int[]
+Semantic check completed with 1 errors
 
