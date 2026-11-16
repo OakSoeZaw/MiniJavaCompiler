@@ -75,13 +75,14 @@ static int isSubtype(TYPE *sub, TYPE *sup){
 /*-----pass 1: class table ------*/
 
 static void addClass(CLASS_DECL *decl, char *name, int line){
-    if (lookupClas(name)){ semError(line, "duplicate class '%s'", name); return;}
+    if (lookupClass(name)){ semError(line, "duplicate class '%s'", name); return;}
     CLASS_INFO *ci = calloc(1, sizeof(CLASS_INFO));
     if (!ci) { perror("calloc"); exit(1);}
     ci->decl = decl; ci->name =name; ci->next = table; table = ci;
 }
 
 static void pass1(PROGRAM *p){
+    if(!p->mainClass) semError(1, "missing main class");
     if (p->mainClass) addClass(NULL, p->mainClass->name, p->mainClass->line);
     for (CLASS_DECL *c = p->classes; c; c= c-> next) addClass(c, c->name, c->line);
 }
@@ -96,8 +97,8 @@ static void pass2(void){
             semError(ci->decl->line, "class '%s' extends itself", pn); continue;
         }
         CLASS_INFO *p = lookupClass(pn);
-        if (!p)       semError(ci->decl->line, "undefined parent class '%s", pn);
-        else if (!p->decl)  semError(ci->decl->line, "cannot extend main class 's'",pn);
+        if (!p)       semError(ci->decl->line, "undefined parent class '%s'", pn);
+        else if (!p->decl)  semError(ci->decl->line, "cannot extend main class '%s'",pn);
         else                ci->parent =p;
     }
     int total = 0;
@@ -237,10 +238,11 @@ static TYPE *typeOf(EXP *e, Env *env){
         case thisK:
             if(!env->cls){ semError(e->line, "'this' used in main"); return &T_ERR;}
             return makeTYPE(e->line, classT, env->cls->name);
-        case idK:
+        case idK:{
             TYPE *t = lookupVar(env, e->val.idE);
             if(!t) { semError(e->line, "undefined variable '%s'", e->val.idE); return &T_ERR;}
             return t;
+        }
         case binOpK:
             switch(e->val.binOpE.op){
                 case plusOp: case minusOp: case timesOp: case divOp: case modOp:
@@ -289,7 +291,7 @@ static TYPE *typeOf(EXP *e, Env *env){
             if(rt->kind == classT){
                 CLASS_INFO *ci = lookupClass(rt->className);
                 if(ci){
-                    m = findMethdo(ci, e->val.methodCallE.methodName);
+                    m = findMethod(ci, e->val.methodCallE.methodName);
                     if(!m) semError(e->line, "no method '%s' in class '%s'", e->val.methodCallE.methodName, rt->className);
                 }
             }else if(rt->kind != errorT){
@@ -374,8 +376,15 @@ static void pass4(PROGRAM *p){
 
 /* ---- entry -----*/
 
+static void freeTable(void){
+    CLASS_INFO *c = table;
+    while(c) { CLASS_INFO * n = c->next; free(c); c= n;}
+    table = NULL;
+}
+
 int checkProgram(PROGRAM *p){
     if(!p) return 0;
+    freeTable();
     pass1(p);
     pass2();
     pass3(p);

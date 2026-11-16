@@ -1,0 +1,63 @@
+=== tests/semantic/01_dup_class.java
+Semantic error at line 3: duplicate class 'A'
+Semantic check completed with 1 errors
+
+=== tests/semantic/02_undefined_parent.java
+Semantic error at line 2: undefined parent class 'Z
+Semantic check completed with 1 errors
+
+=== tests/semantic/03_extends_self.java
+Semantic error at line 2: class 'A' extends itself
+Semantic check completed with 1 errors
+
+=== tests/semantic/04_cycle.java
+Semantic error at line 3: inheritence cycle involving 'B'
+Semantic check completed with 1 errors
+
+=== tests/semantic/05_dup_field.java
+Semantic error at line 4: duplicate field 'x'
+Semantic check completed with 1 errors
+
+=== tests/semantic/06_dup_method.java
+Semantic error at line 4: Duplicate mehtod 'f' in class  'A'
+Semantic check completed with 1 errors
+
+=== tests/semantic/07_bad_override.java
+Semantic error at line 3: method 'f' overrides parent method with a different signature
+Semantic check completed with 1 errors
+
+=== tests/semantic/08_undefined_var.java
+Semantic error at line 3: undefined variable 'x'
+Semantic check completed with 1 errors
+
+=== tests/semantic/09_type_mismatch.java
+Semantic error at line 5: cannot assign boolean to int
+Semantic check completed with 1 errors
+
+=== tests/semantic/10_bad_arity.java
+Semantic error at line 4: wrong number of arguemts to 'f'
+Semantic check completed with 1 errors
+
+=== tests/semantic/11_bad_arg_type.java
+Semantic error at line 4: argument 1 of 'f': cannot pass boolean as int
+Semantic check completed with 1 errors
+
+=== tests/semantic/12_wrong_return.java
+Semantic error at line 2: method 'f' returns boolean but declares int
+Semantic check completed with 1 errors
+
+=== tests/semantic/13_non_bool_cond.java
+Semantic error at line 3: if condition must be boolean, found int
+Semantic check completed with 1 errors
+
+=== tests/semantic/14_null_misuse.java
+Semantic error at line 5: cannot assign null to int
+Semantic check completed with 1 errors
+
+=== tests/semantic/15_this_in_main.java
+Semantic error at line 3: 'this' used in main
+Semantic check completed with 1 errors
+
+=== tests/semantic/16_valid.java
+Parse successful 
+

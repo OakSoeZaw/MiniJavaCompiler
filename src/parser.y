@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.h"
+#include "semantic.h"
 
 int yylex(void);
 void yyerror(const char *s);
@@ -15,6 +16,7 @@ PROGRAM *root = NULL;
 
 %code requires {
     #include "ast.h"
+    #include "semantic.h"
 }
 
 %locations
@@ -162,7 +164,13 @@ MethodBody
 
 VarDeclList1
     : VarDeclaration                    { $$ = $1;}
-    | VarDeclaration VarDeclList1       { $1->next = $2; $$ = $1;}
+    | VarDeclList1 VarDeclaration
+        {
+            VAR_DECL *t = $1;
+            while (t->next) t = t->next;
+            t->next = $2;
+            $$ = $1;
+        }
     ;
 
 StatementList1
@@ -269,6 +277,6 @@ int main(void) {
         printf("Semantic check completed with %d errors\n",sem);
         return 1;
     }
-    print("Parse successful \n");
+    printf("Parse successful \n");
     return 0;
 }

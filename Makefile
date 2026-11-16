@@ -27,7 +27,7 @@ $(BUILD)/ast.o: $(SRC)/ast.c $(SRC)/ast.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/semantic.o: $(SRC)/semantic.c $(SRC)/semantic.h $(SRC)/ast.h
-	$(CC) $(CLFAGS) -I$(SRC) -I$(BUILD) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(SRC) -I$(BUILD) -c $< -o $@
 	
 $(BUILD):
 	mkdir -p $(BUILD)
