@@ -4,7 +4,7 @@ SRC = src
 BUILD = build
 
 TARGET = $(BUILD)/minijava
-OBJS = $(BUILD)/parser.tab.o $(BUILD)/lex.yy.o $(BUILD)/ast.o
+OBJS = $(BUILD)/parser.tab.o $(BUILD)/lex.yy.o $(BUILD)/ast.o $(BUILD)/semantic.o
 
 all: $(TARGET)
 
@@ -25,6 +25,9 @@ $(BUILD)/lex.yy.o: $(BUILD)/lex.yy.c $(BUILD)/parser.tab.h $(SRC)/ast.h
 
 $(BUILD)/ast.o: $(SRC)/ast.c $(SRC)/ast.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/semantic.o: $(SRC)/semantic.c $(SRC)/semantic.h $(SRC)/ast.h
+	$(CC) $(CLFAGS) -I$(SRC) -I$(BUILD) -c $< -o $@
 	
 $(BUILD):
 	mkdir -p $(BUILD)

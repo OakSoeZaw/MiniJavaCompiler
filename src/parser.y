@@ -256,16 +256,19 @@ void yyerror(const char *s) {
 int main(void) {
     /* yydebug = 1; */
     int rc = yyparse();
-    if(rc == 0 && error_count == 0){
-        printf("Parse successful \n");
-        return 0;
-    } else if ( rc == 0){
-        printf("Parse completed with %d syntax error (recovered)\n", error_count);
-        return 1;
-    }else{
+    if(rc != 0){
         printf("Parse failed (unrecoverable)\n");
         return 1;
     }
-
-    
+    if (error_count > 0){
+        printf("Parse completed with %d syntax error(recovered)\n", error_count);
+        return 1;
+    }
+    int sem = checkProgram(root);
+    if(sem > 0){
+        printf("Semantic check completed with %d errors\n",sem);
+        return 1;
+    }
+    print("Parse successful \n");
+    return 0;
 }
