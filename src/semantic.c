@@ -377,7 +377,7 @@ static void pass4(PROGRAM *p){
 int checkProgram(PROGRAM *p){
     if(!p) return 0;
     pass1(p);
-    pass2()
+    pass2();
     pass3(p);
     pass4(p);
     return sem_errors;
