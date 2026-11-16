@@ -87,7 +87,7 @@ static void pass1(PROGRAM *p){
     for (CLASS_DECL *c = p->classes; c; c= c-> next) addClass(c, c->name, c->line);
 }
 
-/* ----- pass2: inheritence -----*/
+/* ----- pass2: inheritance -----*/
 
 static void pass2(void){
     for(CLASS_INFO *ci = table; ci; ci = ci->next){
@@ -107,7 +107,7 @@ static void pass2(void){
         int steps = 0;
         for(CLASS_INFO *c = ci->parent; c; c= c->parent){
             if(c == ci || ++steps > total){
-                semError(ci->decl->line, "inheritence cycle involving '%s'", ci->name);
+                semError(ci->decl->line, "inheritance cycle involving '%s'", ci->name);
                 ci->parent = NULL;
                 break;
             }
@@ -166,7 +166,7 @@ static void pass3(PROGRAM *p){
         for (METHOD *m = c->methods; m; m = m->next){
             for (METHOD *o = m->next; o; o= o->next){
                 if(strcmp(m->name, o->name) == 0){
-                    semError(o->line, "Duplicate mehtod '%s' in class  '%s'", o->name, c->name);
+                    semError(o->line, "duplicate method '%s' in class  '%s'", o->name, c->name);
                 }
             }
             checkTypeExists(m->retType);
@@ -263,7 +263,7 @@ static TYPE *typeOf(EXP *e, Env *env){
             }
             return &T_ERR;
         case unOpK:
-            expect(typeOf(e->val.unOpE.expr, env), boolT, &T_BOOL, e->line, "operan of '!'");
+            expect(typeOf(e->val.unOpE.expr, env), boolT, &T_BOOL, e->line, "operand of '!'");
             return &T_BOOL;
         case arrayNewK:
             expect(typeOf(e->val.arrayNewE.size, env), intT, &T_INT, e->line, "array size");
@@ -305,7 +305,7 @@ static TYPE *typeOf(EXP *e, Env *env){
                     semError(a->head->line, "argument %d of '%s': cannot pass %s as %s", n, m->name, typeName(at), typeName(p->type));
                 }
             }
-            if( m && (a || p)) semError(e->line, "wrong number of arguemts to '%s'", m->name);
+            if( m && (a || p)) semError(e->line, "wrong number of arguments to '%s'", m->name);
             for(; a; a = a->next) typeOf(a->head, env);
             if(m) result = m ->retType;
             return result;
@@ -347,7 +347,7 @@ static void checkStmt(STMT *s, Env *env){
         }
         case arrayAssignK: {
             TYPE *vt = lookupVar(env, s->val.arrayAssignS.name);
-            if(!vt) semError(s->line, "undefined varaible '%s'", s->val.arrayAssignS.name);
+            if(!vt) semError(s->line, "undefined variable '%s'", s->val.arrayAssignS.name);
             else expect(vt, intArrayT, &T_INTARR, s->line, "indexed variable");
             expect(typeOf(s->val.arrayAssignS.index, env), intT, &T_INT, s->line, "array index");
             expect(typeOf(s->val.arrayAssignS.value, env), intT, &T_INT, s->line, "array element value");
@@ -388,6 +388,7 @@ static void freeTable(void){
 
 int checkProgram(PROGRAM *p){
     if(!p) return 0;
+    sem_errors = 0;
     freeTable();
     pass1(p);
     pass2();

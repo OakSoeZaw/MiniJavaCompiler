@@ -170,3 +170,17 @@ class Zoo {
     }
 }
 EOF
+
+M='class Main { public static void main(String[] args) { System.out.println(0); } }'
+cat > 18_dup_param.java <<EOF
+$M
+class A { public int f(int a, int a) { return a; } }
+EOF
+cat > 19_dup_local.java <<EOF
+$M
+class A { public int f() { int a; int a; return 1; } }
+EOF
+cat > 20_local_redeclares_param.java <<EOF
+$M
+class A { public int f(int a) { int a; return a; } }
+EOF

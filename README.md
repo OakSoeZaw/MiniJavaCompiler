@@ -5,11 +5,11 @@ A compiler for a MiniJava dialect, built as a course project in phases.
 | Phase | Deliverable | Status |
 |---|---|---|
 | 1 | Parser with extensions and syntax error recovery | Complete (due Oct 15) |
-| 2 | Symbol resolution and type checking, with unit tests | Planned (due Nov 10) |
+| 2 | Symbol resolution and type checking, with unit tests | Complete (due Nov 10) |
 | 3 | Code generation; run all sample programs | Planned |
 | 4 | (Optional) Optimization pass | Planned |
 
-This README covers Phase 1.
+This README covers Phases 1 and 2.
 
 ## Requirements
 
@@ -22,39 +22,46 @@ This README covers Phase 1.
 ```bash
 make                                   # builds build/minijava
 ./build/minijava < tests/base/BinarySearch.java
-make test                              # runs every test and writes logs/summary.txt
+make test                              # parses base, extensions, errors; writes logs/summary.txt
+make test-all                          # runs every suite and checks expected results
 make clean
 ```
 
-The parser reads a program from stdin. Each rule prints a trace line when it is reduced, so inner constructs appear before the constructs that contain them (bottom-up order). The final line is the result:
+The program reads a MiniJava program from stdin. The parser builds an AST. If there are no syntax errors, the semantic checker runs on it. The last line of output is the result:
 
 | Final line | Meaning |
 |---|---|
-| `Parse successful` | No syntax errors |
-| `Parse completed with N syntax error(s) (recovered)` | Errors were reported and the parser resynchronized |
-| `Parse failed` | Unrecoverable error |
+| `Parse successful` | No syntax errors and no semantic errors |
+| `Parse completed with N syntax error (recovered)` | Syntax errors were reported and the parser resynchronized; the semantic check is skipped |
+| `Semantic check completed with N errors` | The program parsed but has N semantic errors (details on stderr) |
+| `Parse failed (unrecoverable)` | The parser could not recover |
 
 ## Project layout
 
 ```
 miniJava/
 ├── Makefile
-├── run_tests.sh        (optional; same loop as `make test`)
+├── RULES.md            semantic rules (Phase 2)
+├── run_all_tests.sh    runs every suite and checks expected results
+├── make_tests.sh       regenerates tests/semantic/*.java
 ├── src/
 │   ├── lexer.l         Flex scanner
-│   └── parser.y        Bison grammar
+│   ├── parser.y        Bison grammar; builds the AST
+│   ├── ast.h / ast.c   AST nodes and constructors
+│   └── semantic.h / semantic.c   class table, inheritance, member and type checks
 ├── build/              generated files (gitignored)
 ├── tests/
-│   ├── base/           official MiniJava samples
-│   ├── extensions/     programs using the two extensions
-│   └── errors/         programs with deliberate syntax errors
-├── logs/summary.txt    one result line per test
-└── evidence/           selected full outputs (see below)
+│   ├── base/           official MiniJava samples (+ Bad.java, a syntax-error case)
+│   ├── extensions/     programs using the extensions
+│   ├── errors/         programs with deliberate syntax errors
+│   ├── semantic/       one program per semantic error, plus a valid control
+│   └── results/        saved output: base.txt, extensions.txt, semantic.txt
+└── logs/summary.txt    one result line per `make test` run
 ```
 
 ## Grammar overview
 
-The grammar follows the MiniJava BNF: `Goal`, `MainClass`, `ClassDeclaration` (with `extends`), `VarDeclaration`, `MethodDeclaration`, `Type`, `Statement`, `Expression`.
+The grammar follows the MiniJava BNF: `Goal`, `MainClass`, `ClassDeclaration` (with `extends`), `VarDeclaration`, `MethodDeclaration`, `Type`, `Statement`, `Expression`. Each rule's action builds an AST node instead of printing a trace line.
 
 **Operator precedence** (lowest to highest), declared with Bison `%left`/`%right`:
 
@@ -69,9 +76,16 @@ The grammar follows the MiniJava BNF: `Goal`, `MainClass`, `ClassDeclaration` (w
 | 7 | `!` | right |
 | 8 | `[ ]` `.` | left |
 
-**Conflict-free grammar.** Bison reports 0 conflicts (`build/parser.output` confirms this).
+**Conflict-free grammar.** Bison should report 0 conflicts. Check with `bison -v` and `build/parser.output`.
 
-Design note: an earlier version had one shift/reduce conflict. A method body was written as `VarDeclarationList StatementList RETURN ...`, and both lists could be empty. After the last local declaration, the parser had to reduce the empty `StatementList` before it could see a token telling it what came next. With `IDENT` as the lookahead it chose to shift, treating the identifier as the start of another declaration, so `x = 1;` after a declaration failed to parse. The fix is `MethodBody`, which lists the four combinations (declarations present or absent, statements present or absent) using non-empty list rules. No empty rule has to be reduced there, and one token of lookahead is enough to decide.
+Design note: a method body starts with local declarations and then statements, and both a declaration (`Foo x;`) and a statement (`x = 1;`) can begin with an identifier. Writing the body as `VarDeclList StatementList RETURN ...` with both lists possibly empty forces the parser to reduce an empty list before it can see what follows, which causes a shift/reduce conflict. The fix has two parts:
+
+1. `MethodBody` lists the four combinations (declarations present or absent, statements present or absent) using non-empty list rules, so no empty rule has to be reduced there.
+2. `VarDeclList1` is **left-recursive**. After `int x;`, an `IDENT` could start another declaration or a statement. With left recursion the parser shifts that identifier in both cases and decides from the next token: `=` or `[` means a statement, another `IDENT` means a declaration. A right-recursive version caused a conflict, and `x = 1;` after a declaration failed with `unexpected EQUAL, expecting IDENT`.
+
+Lists that are not followed by a token that can start the list's elements (fields, methods, classes, statements before `return`) stay right-recursive, so they come out in source order with no reversal.
+
+**AST naming.** AST types must not share names with Bison tokens, because tokens become C enum constants in `parser.tab.h`. The class node is therefore `CLASS_DECL`, not `CLASS`.
 
 ## Extensions
 
@@ -81,7 +95,7 @@ Adds `/`, `%`, `<=`, `>=`, `>`, and `||` to the base `&&`, `<`, `+`, `-`, `*`.
 **Extension 2: `null`, `==`, `!=`**
 Adds `null` as a constant expression and `==` / `!=` as operators.
 
-The parser checks syntax only. Expressions such as `null == 3` or `true < false` parse successfully. Rejecting them is the job of the type checker in Phase 2.
+The parser checks syntax only, so `null == 3` or `true < false` parse successfully. The Phase 2 type checker rejects them (see `RULES.md`).
 
 Test programs (`tests/extensions/`):
 
@@ -89,29 +103,30 @@ Test programs (`tests/extensions/`):
 |---|---|---|
 | `ops_arith.java` | 1 | `/`, `%` mixed with `+ - *` and parentheses |
 | `ops_relational.java` | 1 | `<= >= > == != \|\| && !` combined |
-| `[ext1_ops_precedence.java]` | 1 | `[long mixed-operator expression]` |
 | `null_refs.java` | 2 | `null` assignment, `==`/`!=` on object fields |
-| `[ext2_null_args.java]` | 2 | `[null passed as an argument]` |
-| `[ext2_null_new.java]` | 2 | `[== between new expressions]` |
+
+`ops_relational` and `null_refs` print boolean values, which is why `System.out.println` accepts `int` or `boolean` in this dialect.
 
 ## Evidence of successful parsing
 
-`make test` runs every program in `tests/` and writes one line per test to `logs/summary.txt`.
+`make test` runs every program in `tests/` and writes one line per test to `logs/summary.txt`. `make test-all` also checks each result against its expected last line and saves full output to `tests/results/`.
 
-**Base samples** (`tests/base/`): all official MiniJava samples.
+**Base samples** (`tests/base/`):
 
 | Program | Result |
 |---|---|
 | BinarySearch | Parse successful |
-| `[BinaryTree]` | `[...]` |
-| `[BubbleSort]` | `[...]` |
-| `[Factorial]` | `[...]` |
-| `[LinearSearch]` | `[...]` |
-| `[LinkedList]` | `[...]` |
-| `[QuickSort]` | `[...]` |
-| `[TreeVisitor]` | `[...]` |
+| BinaryTree | Parse successful |
+| BubbleSort | Parse successful |
+| Factorial | Parse successful |
+| LinearSearch | Parse successful |
+| LinkedList | Parse successful |
+| QuickSort | Parse successful |
+| TreeVisitor | Parse successful |
 
-Full output for selected tests is in `evidence/`: `[BinarySearch]`, one file per extension, and all four error tests.
+`Bad.java` in the same folder is a deliberate syntax error and is expected to report a recovered syntax error.
+
+Full output for every suite is in `tests/results/base.txt`, `tests/results/extensions.txt` and `tests/results/semantic.txt`.
 
 ## Syntax error handling and recovery
 
@@ -126,7 +141,7 @@ The parser uses panic-mode recovery with `error` productions. After an error is 
 
 `yyerrok` is called after each recovery so a second nearby error is still reported. Without it, Bison suppresses messages for the next three shifted tokens. Messages use `%define parse.error verbose`, so they include the line number, the unexpected token, and what was expected. For example: `Syntax error at line 4: syntax error, unexpected RCURLY, expecting SEMI`.
 
-Because `yyparse()` returns 0 after a successful recovery, `main` counts errors itself so a file with errors never prints `Parse successful`.
+Because `yyparse()` returns 0 after a successful recovery, `main` counts errors itself so a file with errors never prints `Parse successful`. Each error production sets its value to `NULL`, and list rules drop `NULL` statements and methods, so the AST never contains holes. Because a recovered parse can still lose declarations, the semantic check is skipped whenever there were syntax errors.
 
 **Error tests** (`tests/errors/`):
 
@@ -145,13 +160,32 @@ My first attempt added `MainClass : CLASS error RCURLY RCURLY`. It had no effect
 
 - **Recovery is coarse.** A syntax error inside a method header skips to the first `}`, which may belong to an inner block, so one mistake can cause a second spurious message.
 - **A missing `;` loses the next statement.** The error is only detected at the following token, and `error SEMI` then discards the next statement through its `;`.
-- **"Recovered" means resynchronized, not valid.** A method or class that contained an error can still print its `Parsed ...` line, because only the bad statement was dropped.
+- **"Recovered" means resynchronized, not valid.** A method or class that contained an error can still be kept with the bad statement dropped, so no semantic check is run on a file with any syntax error.
 - **Keywords are reserved everywhere.** The scanner matches keywords before identifiers, so `main`, `length`, `out`, `println`, `String`, and `System` cannot be used as identifier names.
 - **Comments:** only `//` line comments are supported.
-- **Syntax only.** No symbol resolution or type checking until Phase 2.
+
+## Phase 2: Symbol resolution and type checking
+
+**Status:** complete. AST (`ast.h/.c`), semantic passes
+(`semantic.h/.c`), rules in `RULES.md`.
+
+**Build:** `make`   **Run:** `build/minijava < file.java`
+**Tests:** `make test` (parse), `make test-all` (base, extensions,
+semantic, syntax-error cases).
+
+**Results:** `tests/results/base.txt`, `extensions.txt`, `semantic.txt`.
+
+| Category | Tests |
+|---|---|
+| Expression errors | 08, 09, 13, 14, 15, 17 |
+| Invocation errors | 10, 11 |
+| Duplicate declarations | 01, 05, 06, 18, 19, 20 |
+| Override / overload | 07 |
+| Illegal inheritance | 02, 03, 04 |
+| Return type | 12 |
+| Valid control | 16 |
 
 ## Next phases
 
-- **Phase 2:** build symbol tables and a type checker, with unit tests for expression and invocation errors, duplicate declarations, overload/override errors, and illegal inheritance.
 - **Phase 3:** generate and run code for all sample programs.
 - **Phase 4 (optional):** add an optimization pass and re-run the samples.

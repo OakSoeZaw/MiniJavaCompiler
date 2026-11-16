@@ -11,7 +11,7 @@ Semantic error at line 2: class 'A' extends itself
 Semantic check completed with 1 errors
 
 === tests/semantic/04_cycle.java
-Semantic error at line 3: inheritence cycle involving 'B'
+Semantic error at line 3: inheritance cycle involving 'B'
 Semantic check completed with 1 errors
 
 === tests/semantic/05_dup_field.java
@@ -19,7 +19,7 @@ Semantic error at line 4: duplicate field 'x'
 Semantic check completed with 1 errors
 
 === tests/semantic/06_dup_method.java
-Semantic error at line 4: Duplicate mehtod 'f' in class  'A'
+Semantic error at line 4: Duplicate method 'f' in class  'A'
 Semantic check completed with 1 errors
 
 === tests/semantic/07_bad_override.java
@@ -35,7 +35,7 @@ Semantic error at line 5: cannot assign boolean to int
 Semantic check completed with 1 errors
 
 === tests/semantic/10_bad_arity.java
-Semantic error at line 4: wrong number of arguemts to 'f'
+Semantic error at line 4: wrong number of arguments to 'f'
 Semantic check completed with 1 errors
 
 === tests/semantic/11_bad_arg_type.java
@@ -63,5 +63,17 @@ Parse successful
 
 === tests/semantic/17_println_bad_type.java
 Semantic error at line 3: println argument must be int or boolean, found int[]
+Semantic check completed with 1 errors
+
+=== tests/semantic/18_dup_param.java
+Semantic error at line 2: duplicate parameter 'a'
+Semantic check completed with 1 errors
+
+=== tests/semantic/19_dup_local.java
+Semantic error at line 2: duplicate local variable 'a'
+Semantic check completed with 1 errors
+
+=== tests/semantic/20_local_redeclares_param.java
+Semantic error at line 2: local 'a' redeclares a parameter
 Semantic check completed with 1 errors
 
