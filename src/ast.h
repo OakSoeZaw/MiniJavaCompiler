@@ -5,6 +5,12 @@
 
 typedef struct EXP EXP;
 typedef struct EXP_LIST EXP_LIST;
+struct TYPE;
+struct VAR_DECL;
+struct METHOD;
+
+typedef enum { noVar, localV, paramV, fieldV} VarScope;
+
 
 struct EXP_LIST{
     EXP *head;
@@ -41,6 +47,10 @@ typedef enum {
 struct EXP{
     int line;
     ExpKind kind;
+    struct TYPE *type;
+    struct VAR_DECL *var;
+    VarScope scope;
+    struct METHOD *method;
     union{
         char *idE;
         int intconstE;
@@ -86,6 +96,8 @@ typedef enum {
 struct STMT{
     int line;
     StmtKind kind;
+    struct VAR_DECL *var;
+    VarScope scope;
     union{
         STMT_LIST *blockS;
         struct{ EXP *cond; STMT *thenBranch; STMT *elseBranch;} ifS;

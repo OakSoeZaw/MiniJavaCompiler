@@ -200,16 +200,30 @@ static void pass3(PROGRAM *p){
 /* --- pass 4: bodies ------*/
 typedef struct { CLASS_INFO *cls; METHOD *method; } Env;
 
-static TYPE *lookupVar(Env *env, const char *name){
+static TYPE *lookupVar(Env *env, const char *name, VAR_DECL **declOut, VarScope *scopeOut){
+    if(declOut) *declOut = NULL;
+    if(scopeOut) *scopeOut = noVar;
     if(env->method){
         for(VAR_DECL *v = env->method->locals; v; v=v->next){
-            if(strcmp(v->name, name) == 0) return v->type;
+            if(strcmp(v->name, name) == 0){
+                if(declOut) *declOut = v;
+                if(scopeOut) *scopeOut = localV;
+                return v->type;
+            }
         }
         for(VAR_DECL *v = env->method->params; v; v= v->next){
-            if(strcmp(v->name, name) == 0) return v->type;
+            if(strcmp(v->name, name) == 0){
+                if(declOut) *declOut = v;
+                if(scopeOut) *scopeOut = paramV;
+                return v->type;
+            }
         }
     }
     VAR_DECL *f = findField(env->cls, name);
+    if(f){
+        if(declOut) *declOut = f;
+        if(scopeOut) *scopeOut= fieldV;
+    }
     return f ? f->type: NULL;
 }
 
@@ -220,6 +234,13 @@ static void expect(TYPE *t, TypeKind k, TYPE *want, int line, const char *ctx){
 }
 
 static TYPE *typeOf(EXP *e, Env *env);
+static TYPE *typeOfRaw(EXP *e, Env *env);
+
+static TYPE *typeOf(EXP *e, Env *env){
+    TYPE *t = typeOfRaw(e, env);
+    if(e) e->type = t;
+    return t;
+}
 
 static TYPE *binCheck(EXP *e, TypeKind k, TYPE *operand, TYPE *result, Env *env){
     TYPE *l = typeOf(e->val.binOpE.left, env);
@@ -229,7 +250,7 @@ static TYPE *binCheck(EXP *e, TypeKind k, TYPE *operand, TYPE *result, Env *env)
     return result;
 }
 
-static TYPE *typeOf(EXP *e, Env *env){
+static TYPE *typeOfRaw(EXP *e, Env *env){
     if(!e) return &T_ERR;
     switch (e->kind){
         case intconstK: return &T_INT;
@@ -239,7 +260,7 @@ static TYPE *typeOf(EXP *e, Env *env){
             if(!env->cls){ semError(e->line, "'this' used in main"); return &T_ERR;}
             return makeTYPE(e->line, classT, env->cls->name);
         case idK:{
-            TYPE *t = lookupVar(env, e->val.idE);
+            TYPE *t = lookupVar(env, e->val.idE, &e->var, &e->scope);
             if(!t) { semError(e->line, "undefined variable '%s'", e->val.idE); return &T_ERR;}
             return t;
         }
@@ -337,7 +358,7 @@ static void checkStmt(STMT *s, Env *env){
             break;
         }  
         case assignK:{
-            TYPE *vt = lookupVar(env, s->val.assignS.name);
+            TYPE *vt = lookupVar(env, s->val.assignS.name, &s->var, &s->scope);
             TYPE *et = typeOf(s->val.assignS.value, env);
             if(!vt) semError(s->line, "undefined variable '%s'", s->val.assignS.name);
             else if(!isSubtype(et, vt)){
@@ -346,7 +367,7 @@ static void checkStmt(STMT *s, Env *env){
             break;
         }
         case arrayAssignK: {
-            TYPE *vt = lookupVar(env, s->val.arrayAssignS.name);
+            TYPE *vt = lookupVar(env, s->val.arrayAssignS.name, &s->var, &s->scope);
             if(!vt) semError(s->line, "undefined variable '%s'", s->val.arrayAssignS.name);
             else expect(vt, intArrayT, &T_INTARR, s->line, "indexed variable");
             expect(typeOf(s->val.arrayAssignS.index, env), intT, &T_INT, s->line, "array index");

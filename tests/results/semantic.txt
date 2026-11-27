@@ -1,3 +1,7 @@
+=== tests/semantic/00_while_.java
+Semantic error at line 4: while condition must be boolean, found int
+Semantic check completed with 1 errors
+
 === tests/semantic/01_dup_class.java
 Semantic error at line 3: duplicate class 'A'
 Semantic check completed with 1 errors
@@ -19,7 +23,7 @@ Semantic error at line 4: duplicate field 'x'
 Semantic check completed with 1 errors
 
 === tests/semantic/06_dup_method.java
-Semantic error at line 4: Duplicate method 'f' in class  'A'
+Semantic error at line 4: duplicate method 'f' in class  'A'
 Semantic check completed with 1 errors
 
 === tests/semantic/07_bad_override.java
