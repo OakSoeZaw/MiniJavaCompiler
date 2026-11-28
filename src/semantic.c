@@ -313,6 +313,7 @@ static TYPE *typeOfRaw(EXP *e, Env *env){
                 CLASS_INFO *ci = lookupClass(rt->className);
                 if(ci){
                     m = findMethod(ci, e->val.methodCallE.methodName);
+                    e->method = m;
                     if(!m) semError(e->line, "no method '%s' in class '%s'", e->val.methodCallE.methodName, rt->className);
                 }
             }else if(rt->kind != errorT){
